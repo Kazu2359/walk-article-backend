@@ -83,6 +83,19 @@ npm test
 
 外部サービス（Sign in with Apple検証、Cloudflare R2、OpenAI Whisper、Anthropic Claude、Expo Push）とDB（Prisma）は全てvitestの`vi.mock`でモックしているため、`.env`やdocker-composeを起動していなくても実行できる。
 
+### E2Eスモークテスト（実サービスを使用）
+
+`npm test`とは別に、実際のCloudflare R2・OpenAI Whisper・Anthropic Claude・DB/Redisを通しで確認するスモークテストを用意している。`.env`に実サービスのAPIキーを設定し、`docker compose up -d`・`npm run dev`・`npm run worker:dev`を起動した状態で実行する：
+
+```bash
+SMOKE_TEST_AUDIO_PATH=./sample.m4a npm run smoke
+```
+
+- `SMOKE_TEST_AUDIO_PATH`: 3〜10秒程度の短い`.m4a`音声ファイル（Whisperに実際に文字起こしさせるため、何か日本語で話した内容が望ましい）
+- `SMOKE_TEST_BASE_URL`: 省略時は`http://localhost:3000`。Railway/Fly.ioにデプロイ済みのURLを指定すればデプロイ後の疎通確認にも使える
+- Sign in with Apple自体の検証（実際にAppleが署名したidentity tokenを使う部分）は実機でしか確認できないため、このスクリプトではテストユーザーをDBに直接作成しJWTを自前発行することでバイパスしている。それ以外（録音作成→R2直PUT→アップロード完了→キュー投入→文字起こし→記事生成→記事取得）は本物のサービスを通す
+- `DATABASE_URL`が向いている環境に実際のレコードを作成するため、本番DBに対して実行する場合は影響を理解した上で行うこと
+
 ## 主なコマンド
 
 | コマンド | 内容 |
@@ -95,6 +108,7 @@ npm test
 | `npm run prisma:migrate` | マイグレーション作成・適用（開発用） |
 | `npm run prisma:generate` | Prisma Clientの再生成 |
 | `npm test` | 自動テスト実行（vitest、外部API/DB/Redisは全てモック） |
+| `npm run smoke` | E2Eスモークテスト（実サービス使用、`SMOKE_TEST_AUDIO_PATH`必須） |
 
 ## 実装状況（Phase1: バックエンドMVP）
 
@@ -107,4 +121,5 @@ npm test
 - [x] 非同期ワーカー: R2から音声取得 → Whisper文字起こし → Claude記事生成 → Push通知
 - [x] 音声30日自動削除ジョブ（BullMQ repeatable job、毎日03:00、§12参照）
 - [x] 自動テスト（vitest）: 認証・記事取得/編集・履歴検索・設定変更・音声30日自動削除ジョブ。外部API・DB・Redisはモックし実キー不要で実行可能
-- [ ] Railway/Fly.ioへのデプロイ設定
+- [x] Railway/Fly.ioへのデプロイ設定（`Dockerfile`・`fly.toml`・`railway*.json`、詳細は[DEPLOY.md](./DEPLOY.md)）
+- [x] E2Eスモークテストスクリプト（`npm run smoke`）— 実サービスを使った疎通確認は実際のAPIキー・docker環境を用意してユーザー側で実行する必要あり
