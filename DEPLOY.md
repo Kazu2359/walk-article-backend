@@ -12,18 +12,23 @@
 - `JWT_SECRET`: `openssl rand -base64 32`で生成した本番用の値（開発用と使い回さない）
 - `R2_*` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `EXPO_ACCESS_TOKEN`: 実サービスの値
 
-## Fly.io
+## Fly.io（推奨構成：Postgres/RedisはNeon・Upstashの無料枠を使う）
 
 リポジトリに`fly.toml`を用意済み。`[processes]`で`api`/`worker`/`retention`の3プロセスグループを定義し、`[http_service]`で`api`のみHTTPを公開している（トラフィックがない間は自動停止してコストを抑える設定）。
 
+**コストを抑えるため、Postgres/RedisはFly上で作らず外部の無料枠サービスを使うことを推奨する**（Fly独自のPostgres/Redisは追加のVM課金が発生するため）：
+
+1. [Neon](https://neon.tech)で無料プランのプロジェクトを作成し、接続文字列（`DATABASE_URL`）を控える
+2. [Upstash](https://upstash.com)で無料プランのRedisデータベースを作成し、接続文字列（`REDIS_URL`）を控える
+3. どちらも**クレジットカードを登録せず無料プランのまま**にしておけば、上限を超えても課金は発生しない（性能低下・一時停止のみ）
+
 ```bash
 fly launch --no-deploy        # 対話式セットアップ後、fly.tomlのapp名を実際のものに書き換える
-fly postgres create           # または外部のPostgres（Neon等）を使う場合は不要
-fly redis create              # Upstash Redis等の外部サービスでも可
+                               # Postgres/Redisを作成するか聞かれても「作らない」を選ぶ（Neon/Upstashを使うため）
 
 fly secrets set \
-  DATABASE_URL="postgresql://..." \
-  REDIS_URL="redis://..." \
+  DATABASE_URL="（Neonの接続文字列）" \
+  REDIS_URL="（Upstashの接続文字列）" \
   JWT_SECRET="..." \
   APPLE_BUNDLE_ID="com.kazu2359.walkarticleapp" \
   R2_ACCOUNT_ID="..." R2_ACCESS_KEY_ID="..." R2_SECRET_ACCESS_KEY="..." R2_BUCKET_NAME="..." \
@@ -36,6 +41,10 @@ fly ssh console -C "npx prisma migrate deploy"
 ```
 
 `worker`・`retention`プロセスはHTTPを公開しないバックグラウンドプロセスとして常時起動する（`[[vm]]`の`processes`に含めているため）。
+
+Fly独自のPostgres/Redisを使いたい場合は`fly postgres create`・`fly redis create`でも構築できるが、その分VM課金が追加される点に注意。
+
+**費用の上限について**: Fly.ioに確実な支出上限機能があるかは要確認（Organization Settings → Billingで利用量アラート等の設定を確認する）。より確実に上限を作りたい場合は、利用限度額を低く設定した専用カードをFly.io用に登録するとよい。
 
 ## Railway
 

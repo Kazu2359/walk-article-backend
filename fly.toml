@@ -19,7 +19,10 @@ auto_start_machines = true
 min_machines_running = 0
 processes = ["api"]
 
-# worker/retentionはHTTPを持たないバックグラウンドプロセスとして常時起動する
+# worker/retentionはHTTPを持たないバックグラウンドプロセスとして常時起動する。
+# メモリはFlyのデフォルト（256MB）だとNode.js+Prisma+BullMQでは不足しがちなため512MBを明示
+# （コストの目安はfly.io/pricingで要確認。共有CPU-1x/512MBで概算$3.19/月/プロセス）
 [[vm]]
 size = "shared-cpu-1x"
+memory = "512mb"
 processes = ["api", "worker", "retention"]
