@@ -7,9 +7,11 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "worker:dev": "tsx watch src/workers/transcribeAndGenerate.worker.ts",
+    "retention:dev": "tsx watch src/workers/audioRetention.worker.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "worker:start": "node dist/workers/transcribeAndGenerate.worker.js",
+    "retention:start": "node dist/workers/audioRetention.worker.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prisma:generate": "prisma generate",

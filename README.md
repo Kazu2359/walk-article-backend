@@ -22,7 +22,7 @@ src/
 ├── plugins/auth.ts          JWT発行・検証
 ├── routes/                  auth / recordings / articles / me
 ├── services/                Apple認証検証、R2署名付きURL、Whisper、Claude、Expo Push、BullMQキュー
-├── workers/                  文字起こし→記事生成の非同期ワーカー
+├── workers/                  文字起こし→記事生成の非同期ワーカー、音声30日自動削除の定期ワーカー
 ├── app.ts                    Fastifyインスタンス構築
 └── server.ts                  エントリーポイント
 prisma/schema.prisma          データモデル（§12の7テーブル）
@@ -62,8 +62,9 @@ npm run prisma:migrate
 ### 4. 起動
 
 ```bash
-npm run dev          # APIサーバー（http://localhost:3000）
-npm run worker:dev    # 別ターミナルで非同期ワーカー
+npm run dev            # APIサーバー（http://localhost:3000）
+npm run worker:dev      # 別ターミナルで文字起こし→記事生成ワーカー
+npm run retention:dev   # 別ターミナルで音声30日自動削除の定期ワーカー
 ```
 
 `GET /healthz` で疎通確認できる。
@@ -74,6 +75,7 @@ npm run worker:dev    # 別ターミナルで非同期ワーカー
 |---|---|
 | `npm run dev` | APIサーバーを開発モードで起動（tsx watch） |
 | `npm run worker:dev` | 文字起こし→記事生成ワーカーを開発モードで起動 |
+| `npm run retention:dev` | 音声30日自動削除の定期ワーカーを開発モードで起動 |
 | `npm run typecheck` | 型チェックのみ実行（`tsc --noEmit`） |
 | `npm run build` | `dist/`にビルド |
 | `npm run prisma:migrate` | マイグレーション作成・適用（開発用） |
@@ -88,6 +90,6 @@ npm run worker:dev    # 別ターミナルで非同期ワーカー
 - [x] 履歴: 検索・カーソルページネーション
 - [x] 設定・アカウント: トーン変更・Push トークン登録・アカウント削除（App Store 5.1.1(v)対応）
 - [x] 非同期ワーカー: R2から音声取得 → Whisper文字起こし → Claude記事生成 → Push通知
-- [ ] 音声30日自動削除ジョブ（BullMQ定期ジョブ、§12参照）— 未実装、次のアクション
+- [x] 音声30日自動削除ジョブ（BullMQ repeatable job、毎日03:00、§12参照）
 - [ ] 認証・ルートの自動テスト
 - [ ] Railway/Fly.ioへのデプロイ設定
