@@ -28,7 +28,12 @@ src/
 prisma/schema.prisma          データモデル（§12の7テーブル）
 prisma.config.ts               Prisma CLI設定（Prisma 7、datasource urlはここで指定）
 tests/                          自動テスト（vitest）。外部API・DB・Redisは全てモックし、実キー不要で完結
+Dockerfile / fly.toml / railway*.json   デプロイ設定（詳細はDEPLOY.md参照）
 ```
+
+## デプロイ
+
+Railway / Fly.ioへのデプロイ手順は[DEPLOY.md](./DEPLOY.md)を参照。`api`（Fastify）・`worker`（文字起こし→記事生成）・`retention`（音声30日自動削除）の3プロセスを同一Dockerイメージから起動する構成。
 
 ## セットアップ
 

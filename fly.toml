@@ -1,0 +1,25 @@
+# Fly.io設定。`fly launch --no-deploy`実行後にapp名を実際のものへ書き換えて使う。
+# `fly secrets set`で環境変数（env.sample参照）を設定してから`fly deploy`する。
+app = "walk-article-backend"
+primary_region = "nrt"
+
+[build]
+
+[processes]
+api = "node dist/server.js"
+worker = "node dist/workers/transcribeAndGenerate.worker.js"
+retention = "node dist/workers/audioRetention.worker.js"
+
+# APIのみHTTPを公開。トラフィックがない時間帯は自動停止してコストを抑える
+[http_service]
+internal_port = 3000
+force_https = true
+auto_stop_machines = true
+auto_start_machines = true
+min_machines_running = 0
+processes = ["api"]
+
+# worker/retentionはHTTPを持たないバックグラウンドプロセスとして常時起動する
+[[vm]]
+size = "shared-cpu-1x"
+processes = ["api", "worker", "retention"]

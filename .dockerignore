@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.env
+.env.*
+tests
+vitest.config.ts
+.claude
+*.md
+docker-compose.yml
