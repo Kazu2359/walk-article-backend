@@ -1,28 +1,28 @@
-# Fly.io設定。`fly launch --no-deploy`実行後にapp名を実際のものへ書き換えて使う。
-# `fly secrets set`で環境変数（env.sample参照）を設定してから`fly deploy`する。
-app = "walk-article-backend"
-primary_region = "nrt"
+# fly.toml app configuration file generated for walk-article-backend on 2026-07-19T01:54:14+09:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'walk-article-backend'
+primary_region = 'nrt'
 
 [build]
-
 [processes]
-api = "node dist/server.js"
-worker = "node dist/workers/transcribeAndGenerate.worker.js"
-retention = "node dist/workers/audioRetention.worker.js"
+  api = 'node dist/server.js'
+  retention = 'node dist/workers/audioRetention.worker.js'
+  worker = 'node dist/workers/transcribeAndGenerate.worker.js'
 
-# APIのみHTTPを公開。トラフィックがない時間帯は自動停止してコストを抑える
 [http_service]
-internal_port = 3000
-force_https = true
-auto_stop_machines = true
-auto_start_machines = true
-min_machines_running = 0
-processes = ["api"]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['api']
 
-# worker/retentionはHTTPを持たないバックグラウンドプロセスとして常時起動する。
-# メモリはFlyのデフォルト（256MB）だとNode.js+Prisma+BullMQでは不足しがちなため512MBを明示
-# （コストの目安はfly.io/pricingで要確認。共有CPU-1x/512MBで概算$3.19/月/プロセス）
 [[vm]]
-size = "shared-cpu-1x"
-memory = "512mb"
-processes = ["api", "worker", "retention"]
+  size = 'shared-cpu-1x'
+  memory = '512mb'
+  cpus = 1
+  memory_mb = 512
+  processes = ['api', 'worker', 'retention']
