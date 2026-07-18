@@ -8,7 +8,7 @@ import { meRoutes } from "./routes/me.js";
 import { recordingRoutes } from "./routes/recordings.js";
 
 export function buildApp() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: process.env.NODE_ENV !== "test" });
 
   app.register(sensible);
 
