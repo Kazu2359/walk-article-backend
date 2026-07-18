@@ -1,0 +1,135 @@
+// 散歩記事化アプリ バックエンド データモデル
+// 要件定義書 §12（データモデル）に対応。カラム構成・命名はそちらをSSOTとする。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ArticlePlatform {
+  note
+  x
+}
+
+enum RecordingStatus {
+  uploading
+  queued
+  transcribing
+  generating
+  completed
+  failed
+}
+
+enum Tone {
+  casual
+  polite
+}
+
+model User {
+  id            String   @id @default(uuid())
+  appleUserId   String   @unique @map("apple_user_id")
+  email         String?
+  displayName   String?  @map("display_name")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  settings      UserSettings?
+  xConnection   XConnection?
+  pushTokens    PushToken[]
+  recordings    Recording[]
+
+  @@map("users")
+}
+
+model UserSettings {
+  userId            String   @id @map("user_id")
+  tone              Tone     @default(casual)
+  autoPostXEnabled  Boolean  @default(false) @map("auto_post_x_enabled")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+/// Phase2: X連携（OAuthトークン保管）
+model XConnection {
+  userId          String   @id @map("user_id")
+  xUserId         String   @map("x_user_id")
+  accessToken     String   @map("access_token")
+  refreshToken    String   @map("refresh_token")
+  tokenExpiresAt  DateTime @map("token_expires_at")
+  connectedAt     DateTime @default(now()) @map("connected_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("x_connections")
+}
+
+model PushToken {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  expoPushToken  String   @unique @map("expo_push_token")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_tokens")
+}
+
+model Recording {
+  id                     String           @id @default(uuid())
+  userId                 String           @map("user_id")
+  status                 RecordingStatus  @default(uploading)
+  audioStorageKey        String?          @map("audio_storage_key")
+  durationSeconds        Int              @map("duration_seconds")
+  fileSizeBytes          Int              @map("file_size_bytes")
+  recordedAt             DateTime         @map("recorded_at")
+  uploadedAt             DateTime?        @map("uploaded_at")
+  transcriptCompletedAt  DateTime?        @map("transcript_completed_at")
+  audioDeletedAt         DateTime?        @map("audio_deleted_at")
+  failedReason           String?          @map("failed_reason")
+  createdAt              DateTime         @default(now()) @map("created_at")
+  updatedAt              DateTime         @default(now()) @updatedAt @map("updated_at")
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transcript Transcript?
+  articles   Article[]
+
+  @@index([userId, recordedAt(sort: Desc)])
+  @@map("recordings")
+}
+
+model Transcript {
+  id          String   @id @default(uuid())
+  recordingId String   @unique @map("recording_id")
+  text        String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  recording Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+
+  @@map("transcripts")
+}
+
+model Article {
+  id          String          @id @default(uuid())
+  recordingId String          @map("recording_id")
+  platform    ArticlePlatform
+  title       String?
+  body        String
+  editedBody  String?         @map("edited_body")
+  postedAt    DateTime?       @map("posted_at")
+  postUrl     String?         @map("post_url")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  recording Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+
+  @@unique([recordingId, platform])
+  @@map("articles")
+}
