@@ -2,6 +2,7 @@ import sensible from "@fastify/sensible";
 import Fastify from "fastify";
 import { ZodError } from "zod";
 import { ApiError, toErrorBody } from "./lib/errors.js";
+import { privacyPolicyHtml } from "./lib/privacyPolicyHtml.js";
 import { articleRoutes } from "./routes/articles.js";
 import { authRoutes } from "./routes/auth.js";
 import { meRoutes } from "./routes/me.js";
@@ -28,6 +29,10 @@ export function buildApp() {
   });
 
   app.get("/healthz", async () => ({ status: "ok" }));
+
+  app.get("/privacy", async (_request, reply) => {
+    reply.type("text/html").send(privacyPolicyHtml);
+  });
 
   app.register(authRoutes, { prefix: "/v1" });
   app.register(meRoutes, { prefix: "/v1" });
