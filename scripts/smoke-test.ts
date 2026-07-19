@@ -54,10 +54,10 @@ async function main(): Promise<void> {
     },
     update: {},
   });
-  const headers: RequestHeaders = {
-    authorization: `Bearer ${signAccessToken(user.id)}`,
-    "content-type": "application/json",
-  };
+  // content-typeはJSONボディを送るリクエストにのみ付ける。ボディなしのPOST（complete-upload等）に
+  // 付けるとFastifyが「JSONヘッダーがあるのに本文が空」として400/500を返すため
+  const headers: RequestHeaders = { authorization: `Bearer ${signAccessToken(user.id)}` };
+  const jsonHeaders: RequestHeaders = { ...headers, "content-type": "application/json" };
 
   console.log(`[2/7] ${BASE_URL}/healthz の疎通確認`);
   const health = await fetch(`${BASE_URL}/healthz`);
@@ -68,7 +68,7 @@ async function main(): Promise<void> {
   console.log("[3/7] POST /v1/recordings（R2署名付きアップロードURLの発行）");
   const createResponse = await fetch(`${BASE_URL}/v1/recordings`, {
     method: "POST",
-    headers,
+    headers: jsonHeaders,
     body: JSON.stringify({
       durationSeconds: 5,
       fileSizeBytes: audio.byteLength,
