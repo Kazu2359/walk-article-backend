@@ -52,4 +52,17 @@ export const articleRoutes: FastifyPluginAsync = async (app) => {
     const updated = await prisma.article.update({ where: { id }, data: { postedAt: new Date() } });
     return reply.send({ postedAt: updated.postedAt });
   });
+
+  app.delete("/articles/:id", { preHandler: authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const article = await prisma.article.findFirst({
+      where: { id, recording: { userId: request.userId! } },
+    });
+    if (!article) {
+      throw new ApiError("NOT_FOUND", "記事が見つかりません");
+    }
+
+    await prisma.article.delete({ where: { id } });
+    return reply.status(204).send();
+  });
 };

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockPrisma } = vi.hoisted(() => ({
   mockPrisma: {
-    article: { findFirst: vi.fn(), update: vi.fn() },
+    article: { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() },
   },
 }));
 
@@ -152,5 +152,48 @@ describe("POST /v1/articles/:id/mark-copied", () => {
       where: { id: "article-1" },
       data: { postedAt: expect.any(Date) },
     });
+  });
+});
+
+describe("DELETE /v1/articles/:id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("記事を削除し204を返す", async () => {
+    mockPrisma.article.findFirst.mockResolvedValue({ id: "article-1", platform: "note" });
+    mockPrisma.article.delete.mockResolvedValue({ id: "article-1" });
+
+    const app = buildApp();
+    const response = await app.inject({
+      method: "DELETE",
+      url: "/v1/articles/article-1",
+      headers: authHeader(),
+    });
+
+    expect(response.statusCode).toBe(204);
+    expect(mockPrisma.article.delete).toHaveBeenCalledWith({ where: { id: "article-1" } });
+  });
+
+  it("記事が見つからない場合は404 NOT_FOUNDを返し削除しない", async () => {
+    mockPrisma.article.findFirst.mockResolvedValue(null);
+
+    const app = buildApp();
+    const response = await app.inject({
+      method: "DELETE",
+      url: "/v1/articles/missing",
+      headers: authHeader(),
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(mockPrisma.article.delete).not.toHaveBeenCalled();
+  });
+
+  it("Authorizationヘッダーがない場合は401を返す", async () => {
+    const app = buildApp();
+    const response = await app.inject({ method: "DELETE", url: "/v1/articles/article-1" });
+
+    expect(response.statusCode).toBe(401);
+    expect(mockPrisma.article.delete).not.toHaveBeenCalled();
   });
 });
