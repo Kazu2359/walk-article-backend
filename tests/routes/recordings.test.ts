@@ -254,4 +254,39 @@ describe("GET /v1/recordings（履歴検索）", () => {
     expect(body.items).toHaveLength(1);
     expect(body.nextCursor).toBeNull();
   });
+
+  it("該当件数が0件の場合は空配列とnextCursor nullを返す", async () => {
+    mockPrisma.recording.findMany.mockResolvedValue([]);
+
+    const app = buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/recordings?query=該当なし",
+      headers: authHeader(),
+    });
+
+    const body = response.json();
+    expect(body.items).toEqual([]);
+    expect(body.nextCursor).toBeNull();
+  });
+
+  it("queryを指定しない場合はarticles条件を含めず全件取得する", async () => {
+    mockPrisma.recording.findMany.mockResolvedValue([]);
+
+    const app = buildApp();
+    await app.inject({ method: "GET", url: "/v1/recordings", headers: authHeader() });
+
+    expect(mockPrisma.recording.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: USER_ID },
+      }),
+    );
+  });
+
+  it("Authorizationヘッダーがない場合は401を返す", async () => {
+    const app = buildApp();
+    const response = await app.inject({ method: "GET", url: "/v1/recordings" });
+
+    expect(response.statusCode).toBe(401);
+  });
 });
