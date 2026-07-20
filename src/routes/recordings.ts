@@ -147,7 +147,8 @@ export const recordingRoutes: FastifyPluginAsync = async (app) => {
       status: recording.status,
       articles: recording.articles.map((article) => ({
         platform: article.platform,
-        excerpt: (article.title || article.body).slice(0, 60),
+        title: article.title,
+        excerpt: article.body.slice(0, 80),
       })),
     }));
 
