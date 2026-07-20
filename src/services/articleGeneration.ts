@@ -34,7 +34,7 @@ export async function generateArticles(transcript: string, tone: Tone): Promise<
     system: [
       "あなたは散歩中の音声メモをNote記事とX(旧Twitter)投稿に変換するライターです。",
       `文体は${TONE_INSTRUCTIONS[tone]}を使ってください。`,
-      "Note用は見出し(noteTitle)と本文(noteBody)からなる読み物記事、X用(xBody)は140字程度の短文（ハッシュタグを1つ程度含めてよい）にしてください。",
+      "Note用は見出し(noteTitle)と本文(noteBody、800〜1500字程度)からなる読み物記事、X用(xBody)は140字程度の短文（ハッシュタグを1つ程度含めてよい）にしてください。",
       "音声の書き起こしには言い淀みや繰り返しが含まれることがあるため、自然な文章に整えてください。",
     ].join("\n"),
     messages: [{ role: "user", content: transcript }],
