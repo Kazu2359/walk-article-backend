@@ -6,6 +6,8 @@ const {
   mockTranscribeAudio,
   mockGenerateArticles,
   mockNotifyRecordingCompleted,
+  mockLogWhisperUsage,
+  mockLogClaudeUsage,
 } = vi.hoisted(() => ({
   mockPrisma: {
     recording: { findUniqueOrThrow: vi.fn(), update: vi.fn() },
@@ -16,6 +18,8 @@ const {
   mockTranscribeAudio: vi.fn(),
   mockGenerateArticles: vi.fn(),
   mockNotifyRecordingCompleted: vi.fn(),
+  mockLogWhisperUsage: vi.fn(),
+  mockLogClaudeUsage: vi.fn(),
 }));
 
 vi.mock("../../src/db/client.js", () => ({ prisma: mockPrisma }));
@@ -28,6 +32,10 @@ vi.mock("../../src/services/storage.js", () => ({
 vi.mock("../../src/services/transcription.js", () => ({ transcribeAudio: mockTranscribeAudio }));
 vi.mock("../../src/services/articleGeneration.js", () => ({ generateArticles: mockGenerateArticles }));
 vi.mock("../../src/services/push.js", () => ({ notifyRecordingCompleted: mockNotifyRecordingCompleted }));
+vi.mock("../../src/services/apiUsage.js", () => ({
+  logWhisperUsage: mockLogWhisperUsage,
+  logClaudeUsage: mockLogClaudeUsage,
+}));
 
 const { processRecordingJob } = await import("../../src/services/recordingPipeline.js");
 
@@ -35,6 +43,7 @@ const RECORDING = {
   id: "rec-1",
   userId: "user-1",
   audioStorageKey: "audio/user-1/rec-1.m4a",
+  durationSeconds: 120,
   user: { settings: { tone: "casual" } },
 };
 
@@ -55,7 +64,12 @@ describe("processRecordingJob", () => {
   it("成功時はcompletedまで進み記事を保存する", async () => {
     mockDownloadAudioObject.mockResolvedValue(Buffer.from("audio"));
     mockTranscribeAudio.mockResolvedValue("文字起こし結果");
-    mockGenerateArticles.mockResolvedValue({ noteTitle: "タイトル", noteBody: "本文", xBody: "X用" });
+    mockGenerateArticles.mockResolvedValue({
+      noteTitle: "タイトル",
+      noteBody: "本文",
+      xBody: "X用",
+      usage: { inputTokens: 500, outputTokens: 300 },
+    });
     mockPrisma.recording.update.mockResolvedValue({});
     mockPrisma.transcript.create.mockResolvedValue({});
     mockPrisma.article.createMany.mockResolvedValue({});
@@ -67,6 +81,8 @@ describe("processRecordingJob", () => {
       data: { status: "completed" },
     });
     expect(mockNotifyRecordingCompleted).toHaveBeenCalledWith("user-1", "rec-1");
+    expect(mockLogWhisperUsage).toHaveBeenCalledWith("rec-1", 120);
+    expect(mockLogClaudeUsage).toHaveBeenCalledWith("rec-1", 500, 300);
   });
 
   it("リトライの余地がある失敗ではstatusをfailedにしない", async () => {

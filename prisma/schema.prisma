@@ -28,6 +28,11 @@ enum Tone {
   polite
 }
 
+enum ApiService {
+  whisper
+  claude
+}
+
 model User {
   id            String   @id @default(uuid())
   appleUserId   String   @unique @map("apple_user_id")
@@ -132,4 +137,18 @@ model Article {
 
   @@unique([recordingId, platform])
   @@map("articles")
+}
+
+/// Whisper/Claude APIの利用量・コスト記録（月間コスト集計用）
+model ApiUsageLog {
+  id          String     @id @default(uuid())
+  service     ApiService
+  recordingId String?    @map("recording_id")
+  /// whisperは音声の秒数、claudeはinput+outputの合計トークン数
+  quantity    Int
+  costUsd     Decimal    @db.Decimal(10, 6) @map("cost_usd")
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@index([service, createdAt])
+  @@map("api_usage_logs")
 }

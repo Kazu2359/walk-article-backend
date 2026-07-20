@@ -1,4 +1,5 @@
 import type { Job } from "bullmq";
+import { logClaudeUsage, logWhisperUsage } from "./apiUsage.js";
 import { prisma } from "../db/client.js";
 import { generateArticles } from "./articleGeneration.js";
 import { notifyRecordingCompleted } from "./push.js";
@@ -24,6 +25,7 @@ export async function processRecordingJob(job: Job<TranscribeAndGenerateJobData>
     }
     const audio = await downloadAudioObject(recording.audioStorageKey);
     const transcriptText = await transcribeAudio(audio);
+    await logWhisperUsage(recordingId, recording.durationSeconds);
 
     await prisma.transcript.create({ data: { recordingId, text: transcriptText } });
     await prisma.recording.update({
@@ -33,6 +35,7 @@ export async function processRecordingJob(job: Job<TranscribeAndGenerateJobData>
 
     const tone = recording.user.settings?.tone ?? "casual";
     const articles = await generateArticles(transcriptText, tone);
+    await logClaudeUsage(recordingId, articles.usage.inputTokens, articles.usage.outputTokens);
 
     await prisma.article.createMany({
       data: [

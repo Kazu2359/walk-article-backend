@@ -22,6 +22,7 @@ export interface GeneratedArticleSet {
   noteTitle: string;
   noteBody: string;
   xBody: string;
+  usage: { inputTokens: number; outputTokens: number };
 }
 
 // 要件定義書 §9-4: 1回の録音からNote用1本・X用1本を固定生成
@@ -42,5 +43,11 @@ export async function generateArticles(transcript: string, tone: Tone): Promise<
   if (!response.parsed_output) {
     throw new Error("記事生成の構造化出力に失敗しました");
   }
-  return response.parsed_output;
+  return {
+    ...response.parsed_output,
+    usage: {
+      inputTokens: response.usage.input_tokens ?? 0,
+      outputTokens: response.usage.output_tokens,
+    },
+  };
 }
