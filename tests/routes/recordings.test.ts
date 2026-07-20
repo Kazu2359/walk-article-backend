@@ -111,7 +111,11 @@ describe("POST /v1/recordings/:id/complete-upload", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ status: "queued" });
-    expect(mockQueue.add).toHaveBeenCalledWith("rec-1", { recordingId: "rec-1" });
+    expect(mockQueue.add).toHaveBeenCalledWith(
+      "rec-1",
+      { recordingId: "rec-1" },
+      expect.objectContaining({ attempts: 3 }),
+    );
   });
 
   it("録音が見つからない場合は404を返す", async () => {

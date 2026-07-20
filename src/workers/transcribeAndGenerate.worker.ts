@@ -8,7 +8,7 @@ import {
 
 const worker = new Worker(
   TRANSCRIBE_AND_GENERATE_QUEUE,
-  (job: Job<TranscribeAndGenerateJobData>) => processRecordingJob(job.data.recordingId),
+  (job: Job<TranscribeAndGenerateJobData>) => processRecordingJob(job),
   { connection: redisConnection },
 );
 

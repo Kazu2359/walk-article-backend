@@ -70,7 +70,13 @@ export const recordingRoutes: FastifyPluginAsync = async (app) => {
       data: { status: "queued", uploadedAt: new Date() },
     });
 
-    await transcribeAndGenerateQueue.add(id, { recordingId: id });
+    // Whisper/Claude呼び出しの一時的な失敗（タイムアウト・レート制限等）で処理が
+    // 落ちないよう、指数バックオフで最大3回まで自動リトライする
+    await transcribeAndGenerateQueue.add(
+      id,
+      { recordingId: id },
+      { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
+    );
 
     return reply.send({ status: "queued" });
   });
