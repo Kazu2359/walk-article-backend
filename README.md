@@ -123,3 +123,14 @@ SMOKE_TEST_AUDIO_PATH=./sample.m4a npm run smoke
 - [x] 自動テスト（vitest）: 認証・記事取得/編集・履歴検索・設定変更・音声30日自動削除ジョブ。外部API・DB・Redisはモックし実キー不要で実行可能
 - [x] Railway/Fly.ioへのデプロイ設定（`Dockerfile`・`fly.toml`・`railway*.json`、詳細は[DEPLOY.md](./DEPLOY.md)）
 - [x] E2Eスモークテストスクリプト（`npm run smoke`）— 実サービスを使った疎通確認は実際のAPIキー・docker環境を用意してユーザー側で実行する必要あり
+
+## 今後の計画（Phase2以降）
+
+MVP（v1.0、App Store提出済み）の次に着手する予定の項目。要件定義書§4を参照。
+
+- **X自動投稿（Phase2、優先度: 高）**: `POST /v1/articles/:id/post-to-x`エンドポイントを実装し、X API v2でのpay-per-use投稿に対応する。設定画面で「自動投稿」ON/OFFを切り替え可能にする（§9-2でコスト試算済み、月$6程度）
+- **Note連携の再検討**: 現状は非公式APIのリスクを避け自動投稿を採用していない（§9-1）。Note側で公式APIが提供された場合は改めて対応を検討する
+- **位置情報連携**: 散歩ルート・地名を記事に自動挿入する機能（要調査）
+- **Whisper/Claude APIの利用量・コスト記録**: 月間コストを集計できる仕組み（現状未実装）
+- **Claude API出力の異常時リトライ**: 構造化出力が不正な場合の再試行処理（現状未実装）
+- **バックエンドの監視**: Sentry等によるログ・エラー監視の導入（現状未実装）
