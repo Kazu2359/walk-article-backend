@@ -2,6 +2,7 @@ import sensible from "@fastify/sensible";
 import Fastify from "fastify";
 import { ZodError } from "zod";
 import { ApiError, toErrorBody } from "./lib/errors.js";
+import { faqHtml } from "./lib/faqHtml.js";
 import { privacyPolicyHtml } from "./lib/privacyPolicyHtml.js";
 import { articleRoutes } from "./routes/articles.js";
 import { authRoutes } from "./routes/auth.js";
@@ -32,6 +33,10 @@ export function buildApp() {
 
   app.get("/privacy", async (_request, reply) => {
     reply.type("text/html").send(privacyPolicyHtml);
+  });
+
+  app.get("/faq", async (_request, reply) => {
+    reply.type("text/html").send(faqHtml);
   });
 
   app.register(authRoutes, { prefix: "/v1" });
