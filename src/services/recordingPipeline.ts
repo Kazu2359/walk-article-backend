@@ -17,14 +17,23 @@ export async function processRecordingJob(job: Job<TranscribeAndGenerateJobData>
     include: { user: { include: { settings: true } } },
   });
 
+  // §14「アップロード〜記事生成の処理時間を計測し、目標(1〜2分以内)に近づける」対応。
+  // 各ステップの所要時間をログに残し、fly logsで実測値を確認できるようにする。
+  const pipelineStartedAt = Date.now();
+
   try {
     await prisma.recording.update({ where: { id: recordingId }, data: { status: "transcribing" } });
 
     if (!recording.audioStorageKey) {
       throw new Error("audioStorageKeyが未設定です");
     }
+    const downloadStartedAt = Date.now();
     const audio = await downloadAudioObject(recording.audioStorageKey);
+    const downloadMs = Date.now() - downloadStartedAt;
+
+    const transcribeStartedAt = Date.now();
     const transcriptText = await transcribeAudio(audio);
+    const transcribeMs = Date.now() - transcribeStartedAt;
     await logWhisperUsage(recordingId, recording.durationSeconds);
 
     await prisma.transcript.create({ data: { recordingId, text: transcriptText } });
@@ -34,7 +43,9 @@ export async function processRecordingJob(job: Job<TranscribeAndGenerateJobData>
     });
 
     const tone = recording.user.settings?.tone ?? "casual";
+    const generateStartedAt = Date.now();
     const articles = await generateArticles(transcriptText, tone);
+    const generateMs = Date.now() - generateStartedAt;
     await logClaudeUsage(recordingId, articles.usage.inputTokens, articles.usage.outputTokens);
 
     await prisma.article.createMany({
@@ -46,6 +57,17 @@ export async function processRecordingJob(job: Job<TranscribeAndGenerateJobData>
 
     await prisma.recording.update({ where: { id: recordingId }, data: { status: "completed" } });
     await notifyRecordingCompleted(recording.userId, recordingId);
+
+    console.log(
+      JSON.stringify({
+        event: "recording_pipeline_timing",
+        recordingId,
+        downloadMs,
+        transcribeMs,
+        generateMs,
+        totalMs: Date.now() - pipelineStartedAt,
+      }),
+    );
   } catch (error) {
     const maxAttempts = job.opts.attempts ?? 1;
     const isLastAttempt = job.attemptsMade + 1 >= maxAttempts;
