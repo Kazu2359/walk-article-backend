@@ -15,3 +15,9 @@ const worker = new Worker(
 worker.on("failed", (job, error) => {
   console.error(`recording ${job?.data.recordingId} の処理に失敗:`, error);
 });
+
+// エラーイベントに何もリスナーが無いとNode.jsが未処理例外としてプロセスをクラッシュさせ、
+// Fly.ioの即時再起動で再試行間隔(runRetryDelay)が効かず高速クラッシュループになるため必須
+worker.on("error", (error) => {
+  console.error("transcribe-and-generateワーカーでエラー:", error);
+});

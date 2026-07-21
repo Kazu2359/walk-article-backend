@@ -8,4 +8,8 @@ worker.on("failed", (_job, error) => {
   console.error("音声30日自動削除ジョブが失敗しました:", error);
 });
 
+worker.on("error", (error) => {
+  console.error("audio-retentionワーカーでエラー:", error);
+});
+
 await scheduleAudioRetentionJob();
