@@ -1,0 +1,17 @@
+# walk-article-redis: 自前ホスティングのRedis（BullMQ用）
+# Upstash(コマンド数課金)からの切り替え。コマンド数に関係なく固定費になる。
+# 公開サービスは定義しない — Fly.ioの private networking (.internal) 経由でのみ到達可能。
+
+app = 'walk-article-redis'
+primary_region = 'nrt'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[mounts]
+  source = 'redis_data'
+  destination = '/data'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256mb'

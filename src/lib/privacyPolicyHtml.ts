@@ -16,7 +16,7 @@ export const privacyPolicyHtml = `<!doctype html>
 </head>
 <body>
 <h1>プライバシーポリシー</h1>
-<p class="updated">最終更新日: 2026年7月19日</p>
+<p class="updated">最終更新日: 2026年7月21日</p>
 
 <p>KAZUKI MARUYAMA（以下「運営者」）は、本アプリ「散歩記事化アプリ」（以下「本アプリ」）における利用者の情報の取り扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。</p>
 
@@ -49,9 +49,8 @@ export const privacyPolicyHtml = `<!doctype html>
 <tr><td>OpenAI, L.L.C.</td><td>音声の文字起こし（Whisper API）</td><td>音声データ</td></tr>
 <tr><td>Anthropic, PBC</td><td>記事の自動生成（Claude API）</td><td>文字起こしテキスト</td></tr>
 <tr><td>Cloudflare, Inc.</td><td>音声データの保存（R2ストレージ）</td><td>音声データ</td></tr>
-<tr><td>Fly.io（Fly Ltd.）</td><td>サーバーホスティング</td><td>全般</td></tr>
+<tr><td>Fly.io（Fly Ltd.）</td><td>サーバーホスティング、ジョブキュー処理（Redis）</td><td>全般</td></tr>
 <tr><td>Neon Inc.</td><td>データベースホスティング</td><td>記事・アカウント情報等</td></tr>
-<tr><td>Upstash Inc.</td><td>ジョブキュー処理（Redis）</td><td>処理状況に関する情報</td></tr>
 </table>
 <p>本アプリは、上記以外の目的で第三者に情報を販売・提供することはありません。</p>
 
